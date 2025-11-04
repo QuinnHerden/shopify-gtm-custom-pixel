@@ -22,6 +22,7 @@ const config = {
 
     track: {
       pageView: true,
+      viewItemList: true,
       viewItem: true,
       purchase: true,
     },
@@ -134,6 +135,21 @@ function prepareItems(lineItems) {
   return items;
 }
 
+function prepareItemsFromVariants(productVariants) {
+  const lineItems = [];
+
+  productVariants.forEach((productVariant, index_) => {
+    lineItems.push({
+      variant: productVariant,
+      discountAllocations: [],
+      finalLinePrice: productVariant.price,
+      quantity: 1,
+    });
+  });
+
+  return prepareItems(lineItems);
+}
+
 // ============================
 // Push Enhanced Measurement Events to Data Layer
 // ============================
@@ -166,6 +182,27 @@ if (config.gtm.track.pageView) {
 // Push Recommended Events to Data Layer
 // ============================
 
+if (config.gtm.track.viewItemList) {
+  // https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#view_item_list
+  // https://shopify.dev/docs/api/web-pixels-api/standard-events/collection_viewed
+  analytics.subscribe("collection_viewed", (event) => {
+    const eventData = event.data;
+    const productVariants = eventData.collection.productVariants;
+
+    // parameter: currency
+    const currency = productVariants[0].price.currencyCode;
+
+    // parameter: items
+    const items = prepareItemsFromVariants(productVariants);
+
+    dlPush({
+      event: "view_item_list",
+      currency: currency,
+      items: items,
+    });
+  });
+}
+
 if (config.gtm.track.viewItem) {
   // https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#view_item
   // https://shopify.dev/docs/api/web-pixels-api/standard-events/product_viewed
@@ -180,15 +217,8 @@ if (config.gtm.track.viewItem) {
     const value = productVariant.price.amount;
 
     // parameter: items
-    const lineItems = [
-      {
-        variant: productVariant,
-        discountAllocations: [],
-        finalLinePrice: productVariant.price,
-        quantity: 1,
-      },
-    ];
-    const items = prepareItems(lineItems);
+    const productVariants = [productVariant];
+    const items = prepareItemsFromVariants(productVariants);
 
     dlPush({
       event: "view_item",
