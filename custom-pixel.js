@@ -27,6 +27,8 @@ const config = {
       addToCart: true,
       viewCart: true,
       beginCheckout: true,
+      addShippingInfo: true,
+      addPaymentInfo: true,
       purchase: true,
     },
   },
@@ -61,7 +63,7 @@ function consoleLog(log) {
   }
 }
 
-function dlPush(message) {
+function dataLayerPush(message) {
   consoleLog(
     `Pushing Message to Data Layer -> ${JSON.stringify(message, null, 2)}`,
   );
@@ -207,7 +209,7 @@ if (config.gtm.track.pageView) {
     // parameter: page_title
     const page_title = eventContext?.title;
 
-    dlPush({
+    dataLayerPush({
       event: "page_view",
       page_location: page_location,
       page_referrer: page_referrer,
@@ -243,7 +245,7 @@ if (config.gtm.track.viewItemList) {
     const lineItems = prepareLineItemsFromProductObjects(productObjects);
     const items = prepareItemsFromLineItems(lineItems);
 
-    dlPush({
+    dataLayerPush({
       event: "view_item_list",
       currency: currency,
       items: items,
@@ -275,7 +277,7 @@ if (config.gtm.track.viewItem) {
     const lineItems = prepareLineItemsFromProductObjects(productObjects);
     const items = prepareItemsFromLineItems(lineItems);
 
-    dlPush({
+    dataLayerPush({
       event: "view_item",
       currency: currency,
       value: value,
@@ -310,7 +312,7 @@ if (config.gtm.track.addToCart) {
     const lineItems = prepareLineItemsFromProductObjects(productObjects);
     const items = prepareItemsFromLineItems(lineItems);
 
-    dlPush({
+    dataLayerPush({
       event: "add_to_cart",
       currency: currency,
       value: value,
@@ -349,7 +351,7 @@ if (config.gtm.track.viewCart) {
     const lineItems = prepareLineItemsFromProductObjects(productObjects);
     const items = prepareItemsFromLineItems(lineItems);
 
-    dlPush({
+    dataLayerPush({
       event: "view_cart",
       currency: currency,
       value: value,
@@ -380,11 +382,85 @@ if (config.gtm.track.beginCheckout) {
     // parameter: items
     const items = prepareItemsFromLineItems(checkout.lineItems);
 
-    dlPush({
+    dataLayerPush({
       event: "begin_checkout",
       currency: currency,
       value: value,
       coupon: coupon,
+      items: items,
+    });
+  });
+}
+
+if (config.gtm.track.addShippingInfo) {
+  // https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#add_shipping_info
+  // https://shopify.dev/docs/api/web-pixels-api/standard-events/checkout_address_info_submitted
+  analytics.subscribe("checkout_address_info_submitted", (event) => {
+    const eventData = event.data;
+    const checkout = eventData.checkout;
+
+    // parameter: currency
+    const currency = checkout.subtotalPrice?.currencyCode;
+
+    // parameter: value
+    const value = checkout.subtotalPrice?.amount || 0;
+
+    // parameter: coupon
+    const coupon = getCouponFromDiscountApplications(
+      checkout.discountApplications,
+      (appliesToWholeCart = true),
+    );
+
+    // parameter: shipping_tier
+    const shipping_tier =
+      checkout.delivery?.selectedDeliveryOptions?.[0]?.title || undefined;
+
+    // parameter: items
+    const items = prepareItemsFromLineItems(checkout.lineItems);
+
+    dataLayerPush({
+      event: "add_shipping_info",
+      currency: currency,
+      value: value,
+      coupon: coupon,
+      shipping_tier: shipping_tier,
+      items: items,
+    });
+  });
+}
+
+if (config.gtm.track.addPaymentInfo) {
+  // https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#add_payment_info
+  // https://shopify.dev/docs/api/web-pixels-api/standard-events/payment_info_submitted
+  analytics.subscribe("payment_info_submitted", (event) => {
+    const eventData = event.data;
+    const checkout = eventData.checkout;
+
+    // parameter: currency
+    const currency = checkout.subtotalPrice?.currencyCode;
+
+    // parameter: value
+    const value = checkout.subtotalPrice?.amount || 0;
+
+    // parameter: coupon
+    const coupon = getCouponFromDiscountApplications(
+      checkout.discountApplications,
+      (appliesToWholeCart = true),
+    );
+
+    // parameter: payment_type
+    const payment_type =
+      checkout.transactions?.[0]?.paymentMethod.type || undefined;
+
+    // parameter: items
+    const items = prepareItemsFromLineItems(checkout.lineItems);
+
+    dataLayerPush({
+      event: "add_payment_info",
+      currency: currency,
+      value: value,
+      coupon: coupon,
+      payment_type: payment_type,
       items: items,
     });
   });
@@ -423,10 +499,9 @@ if (config.gtm.track.purchase) {
     const tax = checkout.totalTax.amount || 0;
 
     // parameter: items
-    const lineItems = checkout.lineItems;
-    const items = prepareItemsFromLineItems(lineItems);
+    const items = prepareItemsFromLineItems(checkout.lineItems);
 
-    dlPush({
+    dataLayerPush({
       event: "purchase",
       currency: currency,
       value: value,
