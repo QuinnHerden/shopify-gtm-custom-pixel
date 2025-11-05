@@ -42,28 +42,42 @@ const config = {
 window.dataLayer = window.dataLayer || [];
 
 // Initialize Google Tag Manager
-(function (w, d, s, l, i) {
-  w[l] = w[l] || [];
-  w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
-  var f = d.getElementsByTagName(s)[0],
-    j = d.createElement(s),
-    dl = l != "dataLayer" ? "&l=" + l : "";
+(function(w: Window, d: Document, s: string, l: string, i: string) {
+  // Ensure the dataLayer exists
+  (w as any)[l] = (w as any)[l] || [];
+  (w as any)[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+
+  // Grab the first <script> tag and create a new GTM script element
+  const f = d.getElementsByTagName(s)[0];
+  if (!f || !f.parentNode) {
+    console.warn("GTM Pixel: No script tag found to insert before.");
+    return;
+  }
+
+  const j = d.createElement(s) as HTMLScriptElement;
+  const dl = l !== "dataLayer" ? "&l=" + l : "";
+
+  // Set script attributes
   j.async = true;
   j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+
+  // Insert GTM <script> before the first script tag
   f.parentNode.insertBefore(j, f);
+
 })(window, document, "script", "dataLayer", config.gtm.id);
+
 
 // ============================
 // Declare Helper Functions
 // ============================
 
-function consoleLog(log) {
+function consoleLog(log: string) {
   if (config.pixel.logging) {
     console.log(`Custom Pixel "${config.pixel.name}": ${log}`);
   }
 }
 
-function dataLayerPush(message) {
+function dataLayerPush(message: object) {
   consoleLog(
     `Pushing Message to Data Layer -> ${JSON.stringify(message, null, 2)}`,
   );
@@ -72,7 +86,7 @@ function dataLayerPush(message) {
 
 function getCouponFromDiscountApplications(
   discountApplications,
-  appliesToWholeCart,
+  appliesToWholeCart: boolean,
 ) {
   const discountCodeApplications = discountApplications?.filter(
     (dApp) => dApp.type === "DISCOUNT_CODE",
@@ -92,7 +106,7 @@ function getCouponFromDiscountApplications(
   return (
     filteredApplications
       .map((dApp) => dApp.title) // get the codes
-      .sort((a, b) => a.localeCompare(b)) // sort alphabetically
+      .sort((a: string, b: string) => a.localeCompare(b)) // sort alphabetically
       .join(",") || // comma separated string
     undefined
   );
@@ -100,7 +114,7 @@ function getCouponFromDiscountApplications(
 
 function getCouponFromDiscountAllocations(
   discountAllocations,
-  appliesToWholeCart,
+  appliesToWholeCart: boolean,
 ) {
   const discountApplications = discountAllocations?.map(
     (dAllo) => dAllo.discountApplication,
@@ -115,7 +129,7 @@ function getCouponFromDiscountAllocations(
 function prepareItemsFromLineItems(lineItems) {
   const items = [];
 
-  lineItems.forEach((item, index_) => {
+  lineItems.forEach((item, index_: number) => {
     // parameter: item_id
     const productId = item.variant.id;
     const productSku = item.variant.sku;
@@ -130,12 +144,12 @@ function prepareItemsFromLineItems(lineItems) {
     // parameter: coupon
     const coupon = getCouponFromDiscountAllocations(
       item.discountAllocations,
-      (appliesToWholeCart = false),
+      false,
     );
 
     // parameter: discount
     let discount = 0; // TODO: ensure this only applies for non-wholeCart discounts
-    item.discountAllocations.forEach((da, m) => {
+    item.discountAllocations.forEach((da) => {
       discount += da.amount.amount;
     });
 
@@ -178,7 +192,7 @@ function prepareItemsFromLineItems(lineItems) {
 function prepareLineItemsFromProductObjects(productVariantObjects) {
   const lineItems = [];
 
-  productVariantObjects.forEach((obj, index_) => {
+  productVariantObjects.forEach((obj) => {
     lineItems.push({
       variant: obj.productVariant,
       finalLinePrice: obj.productVariant.price,
@@ -234,7 +248,7 @@ if (config.gtm.track.viewItemList) {
 
     // parameter: items
     const productObjects = [];
-    productVariants.forEach((productVariant, index_) => {
+    productVariants.forEach((productVariant) => {
       productObjects.push({
         productVariant: productVariant,
         quantity: 1,
@@ -340,7 +354,7 @@ if (config.gtm.track.viewCart) {
 
     // parameter: items
     const productObjects = [];
-    cart.lines.forEach((line, index_) => {
+    cart.lines.forEach((line) => {
       productObjects.push({
         productVariant: line.merchandise,
         quantity: line.quantity,
@@ -376,7 +390,7 @@ if (config.gtm.track.beginCheckout) {
     // parameter: coupon
     const coupon = getCouponFromDiscountApplications(
       checkout.discountApplications,
-      (appliesToWholeCart = true),
+      true,
     );
 
     // parameter: items
@@ -408,7 +422,7 @@ if (config.gtm.track.addShippingInfo) {
     // parameter: coupon
     const coupon = getCouponFromDiscountApplications(
       checkout.discountApplications,
-      (appliesToWholeCart = true),
+      true,
     );
 
     // parameter: shipping_tier
@@ -445,7 +459,7 @@ if (config.gtm.track.addPaymentInfo) {
     // parameter: coupon
     const coupon = getCouponFromDiscountApplications(
       checkout.discountApplications,
-      (appliesToWholeCart = true),
+      true,
     );
 
     // parameter: payment_type
@@ -489,7 +503,7 @@ if (config.gtm.track.purchase) {
     // parameter: coupon
     const coupon = getCouponFromDiscountApplications(
       checkout.discountApplications,
-      (appliesToWholeCart = true),
+      true,
     );
 
     // parameter: shipping
