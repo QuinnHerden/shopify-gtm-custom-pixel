@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { dataLayerPush } from "@helpers/dataLayer.js";
+import { dataLayerPush } from "@helpers/dataLayer";
 
 describe("pixel script", () => {
 	it("should pass this dummy test", () => {
