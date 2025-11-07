@@ -1,14 +1,8 @@
-import { vi } from "vitest";
+import type { DataLayer } from "@types/types";
 
-// Mock global Shopify + GTM runtime
-(globalThis as any).window = { dataLayer: [] };
-
-(globalThis as any).analytics = {
-  subscribe: vi.fn(),
-};
-
-(globalThis as any).init = {
-  data: {
-    shop: { name: "Demo Shop" },
+// Assign a mock window with proper type
+Object.assign(globalThis, {
+  window: {
+    dataLayer: [] as DataLayer,
   },
-};
+});

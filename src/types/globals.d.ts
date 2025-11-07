@@ -2,6 +2,8 @@
 //   Global Declarations
 // ================================================
 
+import { DataLayer } from "@types/types";
+
 export {};
 
 declare global {
@@ -15,9 +17,9 @@ declare global {
   // ============================
   // Google Tag Manager Runtime
   // ============================
-  //interface Window {
-  //dataLayer: any[];
-  //}
+  interface Window {
+    dataLayer: DataLayer;
+  }
   // ============================
   // Shopify Data Model Scaffolding
   // ============================
