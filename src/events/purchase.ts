@@ -36,6 +36,12 @@ function handlePurchase(event: EventCheckoutCompleted) {
   // parameter: tax
   const tax = checkout.totalTax.amount || 0;
 
+  // parameter: payment_type
+  const payment_type = checkout.transactions[0]?.paymentMethod.type || null;
+
+  // parameter: payment_gateway
+  const payment_gateway = checkout.transactions[0]?.gateway || null;
+
   // parameter: items
   const items = prepareItemsFromLineItems(checkout.lineItems);
 
@@ -48,6 +54,8 @@ function handlePurchase(event: EventCheckoutCompleted) {
     coupon: coupon,
     shipping: shipping,
     tax: tax,
+    payment_type: payment_type,
+    payment_gateway: payment_gateway,
     items: items,
   });
 }
