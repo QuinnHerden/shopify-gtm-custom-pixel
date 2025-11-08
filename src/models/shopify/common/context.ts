@@ -30,7 +30,7 @@ export interface Location {
 export interface WebPixelsNavigator {
   cookieEnabled: boolean;
   language: string;
-  languages: string[];
+  languages: readonly string[];
   userAgent: string;
 }
 
