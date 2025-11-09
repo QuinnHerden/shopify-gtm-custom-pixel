@@ -1,4 +1,7 @@
-import { CheckoutLineItem, MoneyV2 } from "@models/shopify";
+import {
+  CheckoutLineItem,
+  MoneyV2,
+} from "@sculptedsystems/shopify-web-pixels-api-types";
 
 export type PartialCheckoutLineItem = Pick<
   CheckoutLineItem,
