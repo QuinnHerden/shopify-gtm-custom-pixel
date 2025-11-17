@@ -127,7 +127,7 @@ jobs:
   # ---------------------------------------------------------
   # 4) Release creation ONLY on main
   # ---------------------------------------------------------
-  # publish-release:
+publish-release:
   name: Publish GitHub Release
   needs: [build]
   if: github.ref == 'refs/heads/main'
