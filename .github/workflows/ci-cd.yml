@@ -32,7 +32,6 @@ jobs:
       - name: Run checks
         run: npm run check
 
-  # 🔍 Validate version bump when merging into release branches
   validate-version:
     name: Validate Version on release/*
     if: startsWith(github.ref, 'refs/heads/release/')
@@ -49,7 +48,6 @@ jobs:
           fi
           echo "✅ Version check passed"
 
-  # 🏗️ Build job (runs for release/* and main)
   build:
     name: Build Package
     needs: [checks]
@@ -73,3 +71,47 @@ jobs:
         with:
           name: dist
           path: dist
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Read version
+        id: get_version
+        run: echo "version=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: Release v${{ steps.get_version.outputs.version }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload dist/index.js
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/index.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
