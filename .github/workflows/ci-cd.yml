@@ -127,57 +127,50 @@ jobs:
   # ---------------------------------------------------------
   # 4) Release creation ONLY on main
   # ---------------------------------------------------------
-  publish-release:
-    name: Publish GitHub Release
-    needs: [build]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required to push tags
+  # publish-release:
+  name: Publish GitHub Release
+  needs: [build]
+  if: github.ref == 'refs/heads/main'
+  runs-on: ubuntu-latest
 
-      - name: Download dist
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Read version
-        id: get_version
-        run: echo "version=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+    - name: Download dist
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
 
-      # Create and push tag (if not already present)
-      - name: Create tag
-        run: |
-          VERSION=${{ steps.get_version.outputs.version }}
-          TAG="v$VERSION"
+    - name: Read version
+      id: get_version
+      run: echo "version=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
 
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+    - name: Create tag
+      run: |
+        VERSION=${{ steps.get_version.outputs.version }}
+        TAG="v$VERSION"
 
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "⚠️ Tag $TAG already exists"
-          else
-            git tag "$TAG"
-            git push origin "$TAG"
-          fi
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
 
-      # Create GitHub Release
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          name: Release v${{ steps.get_version.outputs.version }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if git rev-parse "$TAG" >/dev/null 2>&1; then
+          echo "⚠️ Tag $TAG already exists"
+        else
+          git tag "$TAG"
+          git push origin "$TAG"
+        fi
 
-      # Upload compiled JS
-      - name: Upload dist/index.js
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/index.js
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # ⭐ COMBINED RELEASE + ASSET UPLOAD
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Release v${{ steps.get_version.outputs.version }}
+        generate_release_notes: true
+        files: |
+          dist/index.js
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
