@@ -4,6 +4,7 @@ import { registerAddPaymentInfo } from "@events/addPaymentInfo";
 import { registerAddShippingInfo } from "@events/addShippingInfo";
 import { registerAddToCart } from "@events/addToCart";
 import { registerBeginCheckout } from "@events/beginCheckout";
+import { registerFormSubmit } from "@events/form_submit";
 import { registerPageView } from "@events/pageView";
 import { registerPurchase } from "@events/purchase";
 import { registerSearch } from "@events/search";
@@ -14,6 +15,10 @@ import { registerViewItemList } from "@events/viewItemList";
 export function registerEvents(): void {
   if (config.gtm.track.pageView) {
     registerPageView();
+  }
+
+  if (config.gtm.track.formSubmit) {
+    registerFormSubmit();
   }
 
   if (config.gtm.track.search) {

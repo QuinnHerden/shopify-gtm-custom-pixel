@@ -17,6 +17,7 @@ export const config = {
 
     track: {
       pageView: true,
+      formSubmit: true,
       search: true,
       viewItemList: true,
       viewItem: true,
